@@ -8,7 +8,7 @@ import RestaurantUpdate from "./routes/RestaurantUpdate";
 const App = () => {
   return (
     <RestaurantsContextProvider>
-      <React.Fragment>
+      <div className="container">
         <Router>
           <Switch>
             <Route exact path="/" component={Home} />
@@ -24,7 +24,7 @@ const App = () => {
             />
           </Switch>
         </Router>
-      </React.Fragment>
+      </div>
     </RestaurantsContextProvider>
   );
 };

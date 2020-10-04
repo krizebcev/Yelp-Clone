@@ -2,6 +2,7 @@ import React, { useContext, useEffect } from "react";
 import { useHistory } from "react-router-dom";
 import RestaurantsApi from "../api/RestaurantsApi";
 import { RestaurantsContext } from "../context/RestaurantsContext";
+import StarRating from "./StarRating";
 
 const RestaurantsList = (props) => {
   const { restaurants, setRestaurants } = useContext(RestaurantsContext);
@@ -20,7 +21,8 @@ const RestaurantsList = (props) => {
     fetchData();
   }, []);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (e, id) => {
+    e.stopPropagation();
     try {
       const response = await RestaurantsApi.delete(`/${id}`);
       setRestaurants(restaurants.filter((restaurant) => restaurant.id !== id));
@@ -29,13 +31,31 @@ const RestaurantsList = (props) => {
     }
   };
 
-  const handleUpdate = (id) => {
+  const handleUpdate = (e, id) => {
+    e.stopPropagation();
     history.push(`/restaurants/${id}/update`);
+  };
+
+  const handleRestaurantSelect = (id) => {
+    history.push(`/restaurants/${id}`);
+  };
+
+  const renderRating = (restaurant) => {
+    console.log(restaurant);
+    if (!restaurant.count) {
+      return <span className="text-warning">No reviews</span>;
+    }
+    return (
+      <React.Fragment>
+        <StarRating rating={restaurant.id} />
+        <span className="text-warning ml-1">({restaurant.count})</span>
+      </React.Fragment>
+    );
   };
 
   return (
     <div className="list-group table-responsive">
-      <table className="table table-striped">
+      <table className="table table-hover">
         <thead className="bg-danger text-white">
           <tr>
             <th scope="col">Restaurant</th>
@@ -50,7 +70,10 @@ const RestaurantsList = (props) => {
           {restaurants &&
             restaurants.map((restaurant) => {
               return (
-                <tr key={restaurant.id}>
+                <tr
+                  onClick={() => handleRestaurantSelect(restaurant.id)}
+                  key={restaurant.id}
+                >
                   <td>
                     <span className="fas fa-utensils mr-3"></span>
                     {restaurant.name}
@@ -64,10 +87,10 @@ const RestaurantsList = (props) => {
                       <span className="fas fa-dollar-sign mx-1"></span>
                     ))}
                   </td>
-                  <td>Ratings</td>
+                  <td>{renderRating(restaurant)}</td>
                   <td>
                     <button
-                      onClick={() => handleUpdate(restaurant.id)}
+                      onClick={(e) => handleUpdate(e, restaurant.id)}
                       className="btn btn-warning"
                     >
                       Update
@@ -75,7 +98,7 @@ const RestaurantsList = (props) => {
                   </td>
                   <td>
                     <button
-                      onClick={() => handleDelete(restaurant.id)}
+                      onClick={(e) => handleDelete(e, restaurant.id)}
                       className="btn btn-secondary"
                     >
                       Delete
