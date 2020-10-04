@@ -41,13 +41,12 @@ const RestaurantsList = (props) => {
   };
 
   const renderRating = (restaurant) => {
-    console.log(restaurant);
     if (!restaurant.count) {
       return <span className="text-warning">No reviews</span>;
     }
     return (
       <React.Fragment>
-        <StarRating rating={restaurant.id} />
+        <StarRating rating={restaurant.average_rating} />
         <span className="text-warning ml-1">({restaurant.count})</span>
       </React.Fragment>
     );
