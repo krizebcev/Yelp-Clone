@@ -9,7 +9,10 @@ app.use(express.json());
 
 app.get("/api/restaurants", async (req, res) => {
   try {
-    const result = await db.query("SELECT * FROM restaurants ORDER BY id");
+    const result = await db.query(
+      "SELECT * FROM restaurants LEFT JOIN (SELECT restaurant_id, COUNT(*), TRUNC(AVG(rating),1) " +
+        "AS average_rating FROM reviews GROUP BY restaurant_id) reviews ON restaurants.id = reviews.restaurant_id ORDER BY restaurants.id"
+    );
 
     res.status(200).json({
       status: "success",
@@ -25,15 +28,23 @@ app.get("/api/restaurants", async (req, res) => {
 
 app.get("/api/restaurants/:id", async (req, res) => {
   try {
-    const result = await db.query("SELECT * FROM restaurants WHERE id = $1", [
+    const restaurant = db.query(
+      "SELECT * FROM restaurants LEFT JOIN (SELECT restaurant_id, COUNT(*), TRUNC(AVG(rating),1) " +
+        "AS average_rating FROM reviews GROUP BY restaurant_id) reviews ON restaurants.id = reviews.restaurant_id WHERE restaurants.id = $1",
+      [req.params.id]
+    );
+    const reviews = db.query("SELECT * FROM reviews WHERE restaurant_id = $1", [
       req.params.id,
     ]);
 
-    if (result.rowCount > 0) {
+    const result = await Promise.all([restaurant, reviews]);
+
+    if (result[0].rowCount > 0) {
       res.status(200).json({
         status: "success",
         data: {
-          restaurant: result.rows[0],
+          restaurant: result[0].rows[0],
+          reviews: result[1].rows,
         },
       });
     } else {
@@ -106,6 +117,24 @@ app.delete("/api/restaurants/:id", async (req, res) => {
         message: `Restaurant with ID of ${req.params.id} does not exist.`,
       });
     }
+  } catch (err) {
+    console.log(err.stack);
+  }
+});
+
+app.post("/api/restaurants/:id/addReview", async (req, res) => {
+  try {
+    const result = await db.query(
+      "INSERT INTO reviews (restaurant_id, name, review, rating) VALUES ($1, $2, $3, $4) RETURNING *",
+      [req.params.id, req.body.name, req.body.review, req.body.rating]
+    );
+
+    res.status(201).json({
+      status: "success",
+      data: {
+        review: result.rows[0],
+      },
+    });
   } catch (err) {
     console.log(err.stack);
   }
